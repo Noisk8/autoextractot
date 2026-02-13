@@ -1,0 +1,33 @@
+# Flyignore - Archivos a excluir del deploy en Fly.io
+
+# Documentación
+*.md
+!README.md
+
+# Scripts de desarrollo
+*.sh
+*.py
+
+# Archivos de configuración local
+.env*
+!.env.example
+
+# Directorios de desarrollo
+scripts_legacy/
+backup_*/
+.git/
+.vscode/
+.idea/
+
+# Archivos temporales
+*.log
+*.tmp
+.DS_Store
+
+# Node/Python artifacts (se generan en build)
+node_modules/
+__pycache__/
+*.pyc
+.next/
+dist/
+build/

@@ -1,0 +1,82 @@
+# Dockerignore para deploy en Fly.io
+# Excluye archivos innecesarios para reducir tamaño de imagen
+
+# Node modules (se instalan en build)
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+
+# Entornos virtuales
+**/venv/
+**/env/
+**/.venv/
+
+# Git
+.git/
+.gitignore
+**/.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentación y archivos de desarrollo
+README.md
+PROCESSING_FLOW.md
+*.md
+!frontend/README.md
+
+# Scripts de limpieza y análisis
+cleanup_*.sh
+analyze_*.py
+search_*.py
+
+# Archivos de configuración local
+.env.local
+.env.development
+.env.test
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+**/*.test.js
+**/*.spec.js
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+
+# Archivos grandes innecesarios
+*.pdf
+*.zip
+*.tar.gz
+
+# Scripts legacy (no necesarios en producción)
+scripts_legacy/
+
+# Archivos de backup
+backup_*/
+
+# Archivos de análisis
+FILES_CLEANUP_ANALYSIS.md
+SCRIPTS_CLEANUP.md
+CSV_TEMPLATE_README.md

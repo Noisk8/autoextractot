@@ -1,0 +1,37 @@
+import re
+from typing import Optional
+
+def extract_location_for_victim(victim_name: str, text: str) -> Optional[str]:
+    """
+    Extrae el lugar de asesinato para una víctima específica.
+    """
+    # Buscar contexto alrededor del nombre
+    name_pattern = re.escape(victim_name)
+    context_pattern = f'.{{0,300}}{name_pattern}.{{0,300}}'
+    context_matches = re.findall(context_pattern, text, re.IGNORECASE | re.DOTALL)
+    
+    if not context_matches:
+        return None
+    
+    context = ' '.join(context_matches)
+    
+    # Patrones de ubicación
+    location_patterns = [
+        r'[Vv]ereda\s+([^,]+),\s*([^,\n]+)',
+        r'[Mm]unicipio\s+(?:de\s+)?([A-Z][a-záéíóúñ]+)',
+        r'[Vv]ereda\s+([A-Z][a-záéíóúñ\s]+?)(?:\s+de|\s+en|,|\.|$)'
+    ]
+    
+    for pattern in location_patterns:
+        matches = re.findall(pattern, context)
+        if matches:
+            if isinstance(matches[0], tuple):
+                return f"Vereda {matches[0][0]}, {matches[0][1]}, Huila"
+            else:
+                return f"{matches[0]}, Huila"
+    
+    # Si no se encuentra ubicación específica, buscar batallón
+    if 'BIMAG' in context or 'BIPIG' in context or 'Magdalena' in context or 'Pigoanza' in context:
+        return "Huila"
+    
+    return None
