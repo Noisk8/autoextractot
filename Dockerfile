@@ -12,7 +12,7 @@ RUN npm run build
 FROM python:3.11-slim
 
 # Solo instalar Node.js runtime (sin npm, sin los 649 paquetes extra)
-RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

@@ -72,8 +72,10 @@ export default function Home() {
                 if (messageData.type === 'progress') {
                     setProgress(messageData.data)
                     addLog(messageData.data.message, messageData.data.stage)
+                } else if (messageData.type === 'partial_result') {
+                    // Acumular víctimas en tiempo real conforme llegan los lotes
+                    setVictims(prev => [...prev, ...messageData.data.victims])
                 } else if (messageData.type === 'complete') {
-                    setVictims(messageData.data.victims)
                     addLog(`Proceso completado. Se tabularon estructuralmente ${messageData.data.total_found} víctimas.`, 'complete')
                     setIsExtracting(false)
                     ws.close()
@@ -180,14 +182,22 @@ export default function Home() {
                                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                                             <Database className="w-6 h-6 text-blue-400" />
                                             {victims.length} Menciones Extraídas
+                                            {isExtracting && (
+                                                <span className="text-sm font-normal text-blue-400 animate-pulse ml-2">
+                                                    ● procesando...
+                                                </span>
+                                            )}
                                         </h2>
                                         <p className="text-sm text-slate-400 mt-1">
-                                            Registros parseados y tabulados correctamente.
+                                            {isExtracting
+                                                ? 'Recibiendo datos en tiempo real. El CSV estará listo al terminar.'
+                                                : 'Registros parseados y tabulados correctamente.'}
                                         </p>
                                     </div>
                                     <button
                                         onClick={handleExport}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+                                        disabled={isExtracting}
+                                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 flex-shrink-0"
                                     >
                                         <Download className="w-4 h-4" />
                                         <span>Descargar CSV</span>

@@ -1,5 +1,5 @@
 # Fly.io configuration
-app = "auto-extractor-jep"
+app = "autoextractor"
 primary_region = "mia"
 
 [build]
@@ -11,6 +11,23 @@ primary_region = "mia"
   auto_start_machines = true
   min_machines_running = 0
 
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/"
+
 [env]
   PORT = "3000"
   API_PORT = "8000"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -48,7 +48,9 @@ async def upload_pdf(file: UploadFile = File(...)):
         
     pdf_store[session_id] = content
     
-    print(f"File {file.filename} uploaded with session {session_id}, size: len({content}) bytes")
+    import sys
+    sys.stdout.write(f"File {file.filename} uploaded with session {session_id}, size: {len(content)} bytes\n")
+    sys.stdout.flush()
     return {"session_id": session_id, "filename": file.filename}
 
 @app.websocket("/ws/extract/{session_id}")
@@ -85,18 +87,30 @@ async def websocket_extract(websocket: WebSocket, session_id: str):
                 "data": progress.model_dump()
             })
         
-        # Ejecutar extracción libre de la carga de red del PDF
-        orchestrator = ExtractionOrchestrator(progress_callback)
+        # Callback para enviar lotes de víctimas en tiempo real (streaming)
+        all_victims_accumulated = []
+        async def batch_callback(batch: list, processed: int, total: int, is_last: bool):
+            all_victims_accumulated.extend(batch)
+            await websocket.send_json({
+                "type": "partial_result",
+                "data": {
+                    "victims": batch,
+                    "processed": processed,
+                    "total": total
+                }
+            })
+        
+        # Ejecutar extracción con streaming de lotes
+        orchestrator = ExtractionOrchestrator(progress_callback, batch_callback)
         victims = await orchestrator.extract_all(text)
         
-        # Guardar resultados
+        # Guardar resultados para exportación CSV
         extraction_results[session_id] = victims
         
-        # Enviar resultados finales
+        # Enviar señal de completado (sin re-enviar todas las víctimas, ya llegaron en parciales)
         await websocket.send_json({
             "type": "complete",
             "data": {
-                "victims": [v.dict() for v in victims],
                 "total_found": len(victims)
             }
         })
