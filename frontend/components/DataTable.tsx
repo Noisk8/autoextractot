@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Calendar, User, Contact } from 'lucide-react'
+import { MapPin, Calendar, User, Contact, ShieldCheck } from 'lucide-react'
 
 interface Victim {
     id: number
