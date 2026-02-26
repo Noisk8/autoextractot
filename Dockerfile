@@ -4,7 +4,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY frontend/ ./
 RUN npm run build
 
@@ -29,7 +29,7 @@ COPY --from=frontend-builder /app/frontend/package*.json ./frontend/
 COPY --from=frontend-builder /app/frontend/next.config.js ./frontend/
 
 WORKDIR /app/frontend
-RUN npm install --production
+RUN npm install --production --legacy-peer-deps
 
 # Expose ports
 EXPOSE 3000 8000
