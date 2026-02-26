@@ -4,9 +4,9 @@
 cd /app/backend
 python main.py &
 
-# Start frontend
+# Start frontend (Next.js standalone mode)
 cd /app/frontend
-npm start &
+node server.js &
 
 # Wait for any process to exit
 wait -n
