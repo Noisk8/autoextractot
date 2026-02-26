@@ -11,13 +11,28 @@ def extract_dates_for_victim(victim_name: str, text: str) -> Dict[str, Optional[
         'fecha_desaparicion': None
     }
     
-    # Buscar contexto alrededor del nombre
-    name_pattern = re.escape(victim_name)
-    context_pattern = f'.{{0,500}}{name_pattern}.{{0,500}}'
-    context_matches = re.findall(context_pattern, text, re.IGNORECASE | re.DOTALL)
+    # Clean victim name and create a robust search
+    # Sometimes names come with slight variations or are part of larger strings
+    name_parts = victim_name.split()
+    if len(name_parts) >= 2:
+        # Use first and last name for generic search if it's too long
+        robust_name_pattern = f"{name_parts[0]}.*?{name_parts[-1]}"
+    else:
+        robust_name_pattern = re.escape(victim_name)
+    
+    # Find context around the name, clean up newlines to prevent broken phrases
+    clean_text = text.replace('-\n', '').replace('\n', ' ')
+    context_pattern = f'.{{0,500}}{robust_name_pattern}.{{0,500}}'
+    context_matches = re.findall(context_pattern, clean_text, re.IGNORECASE)
     
     if not context_matches:
-        return result
+        # Fallback to exact match if robust failed
+        name_pattern = re.escape(victim_name)
+        context_pattern = f'.{{0,500}}{name_pattern}.{{0,500}}'
+        context_matches = re.findall(context_pattern, clean_text, re.IGNORECASE)
+        
+        if not context_matches:
+            return result
     
     context = ' '.join(context_matches)
     

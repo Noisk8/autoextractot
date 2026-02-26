@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
-
 export const metadata: Metadata = {
-    title: 'Auto Extractor - JEP',
-    description: 'Extracción automática de datos de víctimas desde Autos judiciales',
+    title: 'Auto Extractor AI',
+    description: 'Procesamiento de Autos judiciales automátizado bajo estrictos parámetros Regex locales.',
 }
 
 export default function RootLayout({
@@ -15,8 +12,10 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="es">
-            <body className={inter.className}>{children}</body>
+        <html lang="es" className="dark">
+            <body className="antialiased min-h-screen bg-[#0F172A] selection:bg-blue-500/30">
+                {children}
+            </body>
         </html>
     )
 }

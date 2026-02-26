@@ -4,10 +4,6 @@
 *.md
 !README.md
 
-# Scripts de desarrollo
-*.sh
-*.py
-
 # Archivos de configuración local
 .env*
 !.env.example

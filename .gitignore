@@ -8,3 +8,15 @@ dist/
 build/
 *.log
 .DS_Store
+
+# Virtual environments
+.venv/
+backend/venv/
+venv/
+
+# Ignorar PDFs gigantes y CSVs extraidos temporalmente
+*.pdf
+*.zip
+*.tar.gz
+*extraidas.csv
+extraction_cache/

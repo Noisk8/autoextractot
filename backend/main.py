@@ -27,39 +27,65 @@ extraction_results: dict = {}
 async def root():
     return {"message": "Auto Extractor API", "status": "running"}
 
+@app.post("/upload")
+async def upload_pdf(file: UploadFile = File(...)):
+    """
+    Recibe el PDF vía HTTP POST tradicional (evita caídas por tamaño de payload en WebSockets).
+    Devuelve un session_id para conectarse al WebSocket y recibir el progreso.
+    """
+    import time
+    session_id = str(int(time.time() * 1000))
+    
+    # Leer archivo completo a memoria localmente
+    content = await file.read()
+    
+    # Podríamos guardar el archivo temporalmente, pero para un uso stand-alone de un solo usuario, 
+    # podemos guardarlo en un dict global temporal 
+    # (En producción real usaría redis o almacenamiento temporal de archivos)
+    global pdf_store
+    if 'pdf_store' not in globals():
+        globals()['pdf_store'] = {}
+        
+    pdf_store[session_id] = content
+    
+    print(f"File {file.filename} uploaded with session {session_id}, size: len({content}) bytes")
+    return {"session_id": session_id, "filename": file.filename}
+
 @app.websocket("/ws/extract/{session_id}")
 async def websocket_extract(websocket: WebSocket, session_id: str):
     """
-    WebSocket para extracción con progreso en tiempo real
+    WebSocket EXCLUSIVO para progreso y extracción (no transfiere archivos pesados).
     """
     await websocket.accept()
+    print(f"WebSocket accepted for session: {session_id}")
     
     try:
-        # Recibir archivo PDF
-        data = await websocket.receive_json()
-        pdf_base64 = data.get("pdf_data")
-        
-        if not pdf_base64:
-            await websocket.send_json({
-                "error": "No se recibió archivo PDF"
-            })
+        global pdf_store
+        if 'pdf_store' not in globals() or session_id not in pdf_store:
+            await websocket.send_json({"error": "No se encontró el archivo PDF para esta sesión"})
+            await websocket.close()
             return
+
+        pdf_bytes = pdf_store[session_id]
         
-        # Decodificar PDF
-        import base64
-        pdf_bytes = base64.b64decode(pdf_base64)
+        # Enviar un mensaje inicial
+        await websocket.send_json({"type": "progress", "data": {"stage": "upload", "message": "📥 Archivo recuperado de la memoria del servidor...", "progress": 5}})
         
         # Extraer texto del PDF
+        print(f"Extracting text from PDF for session {session_id}")
         text = extract_text_from_pdf(pdf_bytes)
+        
+        # Limpiar memoria
+        del pdf_store[session_id]
         
         # Callback para enviar progreso
         async def progress_callback(progress: ExtractionProgress):
             await websocket.send_json({
                 "type": "progress",
-                "data": progress.dict()
+                "data": progress.model_dump()
             })
         
-        # Ejecutar extracción
+        # Ejecutar extracción libre de la carga de red del PDF
         orchestrator = ExtractionOrchestrator(progress_callback)
         victims = await orchestrator.extract_all(text)
         
@@ -78,12 +104,16 @@ async def websocket_extract(websocket: WebSocket, session_id: str):
     except WebSocketDisconnect:
         print(f"Client disconnected: {session_id}")
     except Exception as e:
-        await websocket.send_json({
-            "type": "error",
-            "message": str(e)
-        })
-    finally:
-        await websocket.close()
+        print(f"Error in websocket: {e}")
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "message": str(e)
+            })
+        except:
+            pass
+
+
 
 @app.get("/export/{session_id}")
 async def export_csv(session_id: str):
@@ -158,4 +188,14 @@ async def export_csv(session_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Configurar tamaño máximo de mensaje WebSocket para PDFs grandes (50MB) 
+    # y evitar timeouts durante el parsing Base64 pesado inicial.
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000,
+        ws_max_size=52428800,  # 50 MB en bytes
+        timeout_keep_alive=120,
+        ws_ping_interval=60.0,
+        ws_ping_timeout=60.0
+    )
